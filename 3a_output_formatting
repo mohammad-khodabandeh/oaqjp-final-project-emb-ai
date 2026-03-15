@@ -1,0 +1,45 @@
+# -*- coding: ascii -*-
+"""
+emotion detection service
+=========================
+
+"""
+import requests
+import json
+
+EMOTION_URL = \
+    "https://sn-watson-emotion.labs.skills.network/v1/watson.runtime.nlp.v1/NlpService/EmotionPredict"
+MODEL_ID = "emotion_aggregated-workflow_lang_en_stock"
+
+def emotion_detector(text_to_analyze):
+    """
+    detect emotions based on the input text sentiment
+
+    Parameters:
+      text_to_analyze(str):
+        input text to analyse
+
+    Return:
+      dict: the formatted emotion map
+    """
+    header = {
+        "grpc-metadata-mm-model-id": MODEL_ID
+    }
+    payload = {
+        "raw_document": {
+            "text": text_to_analyze
+        }
+    }
+
+    response = requests.post(
+        EMOTION_URL,
+        json = payload,
+        headers = header
+    )
+
+    emotions = [
+        item["emotion"]
+        for item in json.loads(response.text).get("emotionPredictions", [])
+    ][0]
+    emotions["dominant_emotion"] = max(emotions, key=emotions.get)
+    return dict(emotions)
